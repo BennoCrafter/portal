@@ -1,10 +1,17 @@
-# Landing page / portal for minibob.local (port 80).
-# Edit html/index.html to add links — changes are live, no restart needed.
 services:
   portal:
-    image: docker.io/library/nginx:alpine
+    image: docker.io/library/python:3-alpine
     restart: unless-stopped
+    init: true
+    command: ["python", "/app/server.py"]
+    environment:
+      - PORT=80
+      - DATA_DIR=/app/data
     ports:
       - "80:80"
     volumes:
-      - ./html:/usr/share/nginx/html:ro
+      - ./server.py:/app/server.py:ro
+      - ./html:/app/html:ro
+      - ./default_config.json:/app/default_config.json:ro
+      # data path: change here
+      - ../../data/portal:/app/data

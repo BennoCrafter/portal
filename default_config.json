@@ -1,0 +1,13 @@
+{
+  "title": "homeserver",
+  "titleImage": "",
+  "titleImageSize": 220,
+  "services": [
+    {
+      "name": "Service name",
+      "desc": "Service description",
+      "port": 8001,
+      "icon": "lucide: sparkles"
+    }
+  ]
+}

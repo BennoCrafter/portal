@@ -1,0 +1,6 @@
+.DS_Store
+__pycache__
+venv
+
+# User data lives outside the repo (see README); local runs use ./data
+data/
