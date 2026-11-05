@@ -3,6 +3,8 @@ import { serviceIconHtml } from "./icons.js";
 import { $, escapeHtml } from "./util.js";
 
 const STATUS_TIMEOUT_MS = 4000;
+// Smallest root font size in style.css; a numeric titleImageSize is in px at this size.
+const BASE_FONT_SIZE_PX = 16;
 
 export function renderPortal(config) {
   const title = config.title || "Portal";
@@ -23,7 +25,8 @@ export function renderPortal(config) {
 
 /**
  * Optional image above the title. Accepts the same values as a service icon, but is never guessed.
- * `size` is its height: a number means pixels, a string any CSS length ("8rem", "20vh").
+ * `size` is its height: a number means pixels at the base font size (converted to rem, so the image
+ * scales with the window like the rest of the page), a string any CSS length ("8rem", "20vh").
  */
 function renderTitleImage(titleImage, size, title) {
   const box = $("#title-image");
@@ -31,7 +34,7 @@ function renderTitleImage(titleImage, size, title) {
   box.hidden = !value;
   box.innerHTML = value ? serviceIconHtml({ icon: value, name: title }) : "";
 
-  const length = typeof size === "number" ? `${size}px` : String(size ?? "").trim();
+  const length = typeof size === "number" ? `${size / BASE_FONT_SIZE_PX}rem` : String(size ?? "").trim();
   if (length && CSS.supports("height", length)) box.style.setProperty("--title-image-size", length);
   else box.style.removeProperty("--title-image-size");
 }
@@ -80,10 +83,14 @@ function serviceHtml(service) {
     </a>`;
 }
 
-/** `url` wins; otherwise build one from port/path on the host the portal itself was opened with. */
+/**
+ * `url` wins; otherwise build one from port/path on the host the portal itself was opened with.
+ * `url` may leave out the protocol ("nas.local:5000") or be a path on this host ("/grafana/").
+ */
 export function serviceUrl(service) {
-  if (service.url) return service.url;
   const protocol = service.protocol || location.protocol.replace(":", "");
+  const url = String(service.url ?? "").trim();
+  if (url) return url.startsWith("/") || /^[a-z][a-z0-9+.-]*:\/\//i.test(url) ? url : `${protocol}://${url}`;
   const host = service.host || location.hostname;
   const port = service.port ? `:${service.port}` : "";
   return `${protocol}://${host}${port}${service.path || "/"}`;
@@ -96,7 +103,8 @@ function addressLabel(service, url) {
     return `:${service.port}${path}`;
   }
   try {
-    return new URL(url).host;
+    const parsed = new URL(url, location.href);
+    return parsed.host === location.host ? parsed.pathname : parsed.host;
   } catch {
     return "";
   }

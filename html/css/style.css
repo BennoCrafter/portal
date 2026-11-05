@@ -82,10 +82,12 @@ header {
   display: none;
 }
 
+/* Explicit height, not 100%: Chrome sizes the grid row from the image's natural height otherwise. */
 .title-image img {
+  display: block;
   width: auto;
   max-width: 100%;
-  height: 100%;
+  height: var(--size);
   object-fit: contain;
 }
 
@@ -232,4 +234,37 @@ h1 {
   background: currentColor;
   -webkit-mask: var(--src) center / contain no-repeat;
   mask: var(--src) center / contain no-repeat;
+}
+
+/* ==========================================================================
+   Status page
+   ========================================================================== */
+
+.status-links {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 12px;
+  font-size: 0.9rem;
+}
+
+.status-links a {
+  color: var(--accent);
+}
+
+.status-group {
+  margin-left: 6px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.status-detail {
+  max-width: 40%;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.status-detail.down {
+  color: var(--down);
 }

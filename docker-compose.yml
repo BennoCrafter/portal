@@ -7,6 +7,10 @@ services:
     environment:
       - PORT=80
       - DATA_DIR=/app/data
+      # /status checks port-based services from inside the container, so reach them via the Docker host
+      - STATUS_HOST=host.docker.internal
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "80:80"
     volumes:
