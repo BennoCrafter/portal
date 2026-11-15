@@ -7,12 +7,14 @@
   <link rel="stylesheet" href="css/style.css">
   <script type="module" src="js/status.js"></script>
 </head>
-<body>
+<body data-view="list">
   <main>
     <header>
-      <h1>Status</h1>
-      <p class="subtitle" id="summary">Checking…</p>
-      <nav class="status-links">
+      <div class="titles">
+        <h1>Status</h1>
+        <p class="subtitle" id="summary">Checking…</p>
+      </div>
+      <nav class="toolbar">
         <a href="./">← Portal</a>
         <a href="api/status">JSON</a>
       </nav>

@@ -1,10 +1,9 @@
-/** Renders the read-only service list. */
+/** Renders the service list. */
 import { serviceIconHtml } from "./icons.js";
+import { applyUpdateState, updateControlsHtml } from "./updates.js";
 import { $, escapeHtml } from "./util.js";
 
 const STATUS_TIMEOUT_MS = 4000;
-// Smallest root font size in style.css; a numeric titleImageSize is in px at this size.
-const BASE_FONT_SIZE_PX = 16;
 
 export function renderPortal(config) {
   const title = config.title || "Portal";
@@ -21,12 +20,12 @@ export function renderPortal(config) {
     : `<p class="message">No services yet. Add some in config.json.</p>`;
 
   if (config.statusCheck !== false) checkReachability(container);
+  applyUpdateState();
 }
 
 /**
- * Optional image above the title. Accepts the same values as a service icon, but is never guessed.
- * `size` is its height: a number means pixels at the base font size (converted to rem, so the image
- * scales with the window like the rest of the page), a string any CSS length ("8rem", "20vh").
+ * Optional image next to the title. Accepts the same values as a service icon, but is never guessed.
+ * `size` is its height: a number means pixels, a string any CSS length ("3rem").
  */
 function renderTitleImage(titleImage, size, title) {
   const box = $("#title-image");
@@ -34,7 +33,7 @@ function renderTitleImage(titleImage, size, title) {
   box.hidden = !value;
   box.innerHTML = value ? serviceIconHtml({ icon: value, name: title }) : "";
 
-  const length = typeof size === "number" ? `${size / BASE_FONT_SIZE_PX}rem` : String(size ?? "").trim();
+  const length = typeof size === "number" ? `${size}px` : String(size ?? "").trim();
   if (length && CSS.supports("height", length)) box.style.setProperty("--title-image-size", length);
   else box.style.removeProperty("--title-image-size");
 }
@@ -70,17 +69,21 @@ function serviceHtml(service) {
   const url = serviceUrl(service);
   const target = service.newTab ? ` target="_blank" rel="noopener"` : "";
   const description = service.desc ? `<div class="service-desc">${escapeHtml(service.desc)}</div>` : "";
+  const app = service.app ? ` data-app="${escapeHtml(service.app)}"` : "";
 
   return `
-    <a class="service" href="${escapeHtml(url)}"${target}>
-      <div class="icon">${serviceIconHtml(service)}</div>
-      <div class="service-text">
-        <div class="service-name">${escapeHtml(service.name)}</div>
-        ${description}
-      </div>
-      <span class="service-address">${escapeHtml(addressLabel(service, url))}</span>
-      <span class="status-dot" title="Checking…"></span>
-    </a>`;
+    <div class="service"${app}>
+      <a class="service-link" href="${escapeHtml(url)}"${target}>
+        <div class="icon">${serviceIconHtml(service)}</div>
+        <div class="service-text">
+          <div class="service-name">${escapeHtml(service.name)}</div>
+          ${description}
+        </div>
+        <span class="service-address">${escapeHtml(addressLabel(service, url))}</span>
+        <span class="status-dot" title="Checking…"></span>
+      </a>
+      ${service.app ? updateControlsHtml() : ""}
+    </div>`;
 }
 
 /**
@@ -115,7 +118,7 @@ function addressLabel(service, url) {
  * but it resolves if *anything* answers and rejects if the connection is refused.
  */
 function checkReachability(container) {
-  for (const link of container.querySelectorAll("a.service")) {
+  for (const link of container.querySelectorAll("a.service-link")) {
     const dot = $(".status-dot", link);
     const abort = new AbortController();
     const timer = setTimeout(() => abort.abort(), STATUS_TIMEOUT_MS);

@@ -11,8 +11,17 @@
   <main>
     <header>
       <div class="title-image" id="title-image" hidden></div>
-      <h1 id="title">Portal</h1>
-      <p class="subtitle" id="subtitle"></p>
+      <div class="titles">
+        <h1 id="title">Portal</h1>
+        <p class="subtitle" id="subtitle"></p>
+      </div>
+      <nav class="toolbar">
+        <a href="status">Status</a>
+        <div class="view-toggle" role="group" aria-label="Layout">
+          <button type="button" data-view="grid" aria-pressed="false">Grid</button>
+          <button type="button" data-view="list" aria-pressed="false">List</button>
+        </div>
+      </nav>
     </header>
 
     <!-- Filled by js/portal.js -->

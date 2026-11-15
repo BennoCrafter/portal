@@ -3,17 +3,15 @@
    ========================================================================== */
 
 :root {
-  --bg: #f6f5f2;
+  --bg: #f5f5f4;
   --card: #fff;
-  --fg: #1d1d1f;
-  --muted: #6e6e73;
-  --line: #e3e1dc;
+  --fg: #1c1c1e;
+  --muted: #6b6b70;
+  --line: #e2e2df;
   --accent: #2f6f4f;
   --up: #2e9d5b;
   --down: #c2453d;
-
-  --radius: 16px;
-  --gap: clamp(10px, 1.2vw, 16px);
+  --radius: 10px;
 
   color-scheme: light dark;
 }
@@ -39,40 +37,39 @@
   box-sizing: border-box;
 }
 
-/* Everything is sized in rem, so this one rule scales the whole page with the viewport. */
-html {
-  font-size: clamp(16px, 0.6vw + 13px, 21px);
-}
-
 body {
   margin: 0;
-  min-height: 100vh;
-  font: 1rem/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font: 0.9375rem/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
   background: var(--bg);
   color: var(--fg);
 }
 
 main {
-  width: min(960px, 100%);
+  max-width: 880px;
   margin: 0 auto;
-  padding: clamp(32px, 7vw, 96px) clamp(16px, 4vw, 40px);
+  padding: 24px 16px 48px;
 }
 
 header {
-  text-align: center;
-  margin-bottom: clamp(28px, 5vw, 56px);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.titles {
+  flex: 1;
+  min-width: 0;
 }
 
 /* --title-image-size (the height) is set from config.titleImageSize; wide logos keep their aspect ratio. */
 .title-image {
-  --size: var(--title-image-size, clamp(4rem, 6vw + 2rem, 6rem));
+  --size: var(--title-image-size, 2.5rem);
+  flex: none;
   display: grid;
   place-items: center;
-  width: fit-content;
-  min-width: var(--size);
-  max-width: 100%;
   height: var(--size);
-  margin: 0 auto 16px;
+  min-width: var(--size);
   color: var(--accent);
   font-size: calc(var(--size) * 0.67);
   line-height: 1;
@@ -82,11 +79,9 @@ header {
   display: none;
 }
 
-/* Explicit height, not 100%: Chrome sizes the grid row from the image's natural height otherwise. */
 .title-image img {
   display: block;
   width: auto;
-  max-width: 100%;
   height: var(--size);
   object-fit: contain;
 }
@@ -97,16 +92,62 @@ header {
 }
 
 h1 {
-  margin: 0 0 6px;
-  font-size: clamp(2rem, 3vw + 1rem, 3.25rem);
-  line-height: 1.1;
-  letter-spacing: -0.025em;
+  margin: 0;
+  font-size: 1.375rem;
+  line-height: 1.2;
 }
 
 .subtitle {
   margin: 0;
   color: var(--muted);
-  font-size: 1.1rem;
+  font-size: 0.875rem;
+}
+
+.subtitle:empty {
+  display: none;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.875rem;
+}
+
+.toolbar a {
+  color: var(--accent);
+}
+
+.view-toggle {
+  display: flex;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  overflow: hidden;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: var(--card);
+  border: 0;
+  padding: 3px 10px;
+  cursor: pointer;
+}
+
+.view-toggle button + button {
+  border-left: 1px solid var(--line);
+}
+
+.view-toggle button[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--bg);
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .message {
@@ -120,52 +161,54 @@ h1 {
 }
 
 /* ==========================================================================
-   Service list
+   Services: list (default) and grid (body[data-view="grid"])
    ========================================================================== */
 
 .group + .group {
-  margin-top: var(--gap);
+  margin-top: 20px;
 }
 
 .group-title {
-  margin: clamp(28px, 4vw, 44px) 0 12px;
-  padding-left: 4px;
-  font-size: 0.8rem;
+  margin: 0 0 8px 2px;
+  font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   color: var(--muted);
-}
-
-.group:first-child .group-title {
-  margin-top: 0;
 }
 
 .service-list {
   display: flex;
   flex-direction: column;
-  gap: var(--gap);
+  gap: 6px;
 }
 
 .service {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: clamp(12px, 2vw, 22px);
-  padding: clamp(16px, 1.8vw, 26px) clamp(16px, 2.2vw, 30px);
+  gap: 12px;
+  padding: 10px 12px;
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   color: inherit;
   text-decoration: none;
-  transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
 }
 
-.service:hover,
-.service:focus-visible {
+.service:has(.service-link:hover),
+a.service:hover {
   border-color: var(--accent);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgb(0 0 0 / 0.08);
-  outline: none;
+}
+
+.service-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
 }
 
 .service-text {
@@ -174,33 +217,117 @@ h1 {
 }
 
 .service-name {
-  font-size: 1.2rem;
   font-weight: 600;
-  line-height: 1.3;
 }
 
 .service-desc {
-  margin-top: 2px;
-  font-size: 0.9rem;
+  font-size: 0.8125rem;
   color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .service-address {
   flex: none;
-  font: 0.85rem ui-monospace, Menlo, monospace;
-  color: var(--accent);
+  font: 0.8125rem ui-monospace, Menlo, monospace;
+  color: var(--muted);
 }
 
 .status-dot {
   flex: none;
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: var(--line);
 }
 
 .status-dot.up   { background: var(--up); }
 .status-dot.down { background: var(--down); }
+
+.update-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+.update-button {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 2px 8px;
+}
+
+.update-button:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+
+.auto-toggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.update-state.failed {
+  color: var(--down);
+}
+
+body[data-view="grid"] .service-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 10px;
+}
+
+body[data-view="grid"] .service {
+  flex-direction: column;
+  align-items: stretch;
+  padding: 12px;
+}
+
+body[data-view="grid"] .service-link {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+body[data-view="grid"] .service-text {
+  flex: none;
+  width: 100%;
+}
+
+body[data-view="grid"] .service-address {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body[data-view="grid"] .status-dot {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+}
+
+body[data-view="grid"] .update-controls {
+  flex-wrap: wrap;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+@media (max-width: 560px) {
+  header {
+    flex-wrap: wrap;
+  }
+
+  .service-address,
+  .update-state {
+    display: none;
+  }
+}
 
 /* ==========================================================================
    Icons
@@ -210,13 +337,13 @@ h1 {
   flex: none;
   display: grid;
   place-items: center;
-  width: 2.75rem;
-  height: 2.75rem;
+  width: 2.25rem;
+  height: 2.25rem;
   overflow: hidden;
-  border-radius: 12px;
+  border-radius: 8px;
   background: color-mix(in srgb, var(--accent) 12%, transparent);
   color: var(--accent);
-  font-size: 1.4rem;
+  font-size: 1.1rem;
   font-weight: 700;
 }
 
@@ -239,18 +366,6 @@ h1 {
 /* ==========================================================================
    Status page
    ========================================================================== */
-
-.status-links {
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-  margin-top: 12px;
-  font-size: 0.9rem;
-}
-
-.status-links a {
-  color: var(--accent);
-}
 
 .status-group {
   margin-left: 6px;

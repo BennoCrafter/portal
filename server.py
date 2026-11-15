@@ -12,6 +12,12 @@ hard refresh. Standard library only.
 /status is a page showing whether each service answers; /api/status returns the
 same as JSON. The checks run here on the server, not in the browser.
 
+Updates: the portal has no Docker access. POST /api/update/<app> drops a file in
+DATA_DIR/requests/, which the host's `srv process-requests` picks up; it writes
+the result to DATA_DIR/updates.json. POST /api/autoupdate/<app> with
+{"enabled": bool} edits DATA_DIR/autoupdate.json, read by the nightly
+`srv auto-update`. GET /api/updates returns both.
+
 Environment:
   PORT         port to listen on (default: 80)
   DATA_DIR     folder with config.json and images (default: ./data)
@@ -40,6 +46,11 @@ DEFAULT_CONFIG_PATH = os.path.join(APP_DIR, "default_config.json")
 DATA_DIR = os.path.abspath(os.environ.get("DATA_DIR", os.path.join(APP_DIR, "data")))
 CONFIG_PATH = os.path.join(DATA_DIR, "config.json")
 DATA_URL_PREFIX = "/data/"
+REQUESTS_DIR = os.path.join(DATA_DIR, "requests")
+UPDATES_PATH = os.path.join(DATA_DIR, "updates.json")
+AUTOUPDATE_PATH = os.path.join(DATA_DIR, "autoupdate.json")
+# Compose app folder names; srv on the host also checks the name is a real app
+APP_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")
 
 PORT = int(os.environ.get("PORT", "80"))
 STATUS_HOST = os.environ.get("STATUS_HOST", "").strip()
@@ -57,10 +68,36 @@ class PortalHandler(SimpleHTTPRequestHandler):
         super().end_headers()
 
     def do_GET(self):
-        if urlsplit(self.path).path == "/api/status":
+        path = urlsplit(self.path).path
+        if path == "/api/status":
             self.send_status_json()
+        elif path == "/api/updates":
+            self.send_json(200, {"status": read_json(UPDATES_PATH, {}), "auto": read_json(AUTOUPDATE_PATH, [])})
         else:
             super().do_GET()
+
+    def do_POST(self):
+        # A custom header forces a CORS preflight (which we never answer), so other sites can't post here.
+        if self.headers.get("X-Portal") != "1":
+            return self.send_json(403, {"error": "missing X-Portal header"})
+        match = re.fullmatch(r"/api/(update|autoupdate)/([^/]+)", urlsplit(self.path).path)
+        if not match or not APP_NAME.match(match[2]):
+            return self.send_json(404, {"error": "unknown endpoint or app"})
+        action, app = match.groups()
+        if action == "update":
+            os.makedirs(REQUESTS_DIR, exist_ok=True)
+            open(os.path.join(REQUESTS_DIR, app), "w").close()
+            return self.send_json(202, {"requested": app})
+        try:
+            enabled = json.loads(self.rfile.read(int(self.headers.get("Content-Length") or 0)) or b"{}")["enabled"]
+            if not isinstance(enabled, bool):
+                raise TypeError
+        except (ValueError, KeyError, TypeError):
+            return self.send_json(400, {"error": 'body must be {"enabled": true|false}'})
+        auto = set(read_json(AUTOUPDATE_PATH, []))
+        auto.add(app) if enabled else auto.discard(app)
+        write_json(AUTOUPDATE_PATH, sorted(auto))
+        self.send_json(200, {"auto": sorted(auto)})
 
     def send_status_json(self):
         try:
@@ -72,7 +109,9 @@ class PortalHandler(SimpleHTTPRequestHandler):
             status, body = 200, status_report(config, STATUS_HOST or request_host, protocol)
         except (OSError, ValueError) as error:
             status, body = 500, {"error": f"Could not read config.json: {error}"}
+        self.send_json(status, body)
 
+    def send_json(self, status, body):
         data = json.dumps(body, indent=2).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
@@ -137,6 +176,21 @@ def status_report(config: dict, host: str, protocol: str) -> dict:
         "summary": {"total": len(results), "up": up, "down": len(results) - up},
         "services": results,
     }
+
+
+def read_json(path: str, default):
+    try:
+        with open(path, encoding="utf-8") as file:
+            return json.load(file)
+    except (OSError, ValueError):
+        return default
+
+
+def write_json(path: str, value) -> None:
+    tmp = f"{path}.tmp"
+    with open(tmp, "w", encoding="utf-8") as file:
+        json.dump(value, file, indent=2)
+    os.replace(tmp, path)
 
 
 def ensure_config() -> None:
